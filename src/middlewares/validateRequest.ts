@@ -1,15 +1,18 @@
+import { NextFunction, Request, Response } from 'express';
+import { z } from 'zod';
+import catchAsync from '../utils/catchAsync.js';
 
-import { Request, Response, NextFunction } from "express";
-import catchAsync from "../utils/catchAsync.js";
-import { ZodObject } from 'zod';
-
-
-const validateRequest = (schema: ZodObject) => {
+const validateRequest = (schema: z.ZodTypeAny) => {
     return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        // We use parseAsync so we can eventually add async database checks 
+        // inside our Zod schemas (e.g., checking if email is already in use)
         await schema.parseAsync({
             body: req.body,
             cookies: req.cookies,
+            query: req.query,
+            params: req.params,
         });
+
         next();
     });
 };

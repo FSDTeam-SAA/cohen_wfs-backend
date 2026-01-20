@@ -1,25 +1,58 @@
-import type { ErrorRequestHandler } from 'express';
+import { ErrorRequestHandler } from 'express';
+import { ZodError } from 'zod';
+import { StatusCodes } from 'http-status-codes';
+
+import AppError from '../errors/AppError.js';
+import { handleZodError } from '../errors/handleZodError.js';
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Something went wrong!';
+  // 1. Set Default Values
+  let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // 500
+  let message = 'Something went wrong!';
+  let errorSources = [
+    {
+      path: '',
+      message: 'Something went wrong',
+    },
+  ];
 
-  // Handle specific MongoDB/Mongoose errors
-  if (err.name === 'ValidationError') {
-    statusCode = 400;
-    message = Object.values(err.errors).map((val: any) => val.message).join(', ');
-  } else if (err.code === 11000) {
-    statusCode = 409;
-    message = 'Duplicate field value entered';
-  } else if (err.name === 'CastError') {
-    statusCode = 404;
-    message = `Resource not found. Invalid: ${err.path}`;
+  // 2. Handle Specific Error Types
+  if (err instanceof ZodError) {
+    const simplifiedError = handleZodError(err);
+    statusCode = simplifiedError.statusCode;
+    message = simplifiedError.message;
+    errorSources = simplifiedError.errorSources.map(error => ({
+      path: String(error.path ?? ''),
+      message: error.message,
+    }));
+  }
+  else if (err instanceof AppError) {
+    statusCode = err?.statusCode;
+    message = err.message;
+    errorSources = [
+      {
+        path: '',
+        message: err?.message,
+      },
+    ];
+  }
+  else if (err instanceof Error) {
+    message = err.message;
+    errorSources = [
+      {
+        path: '',
+        message: err?.message,
+      },
+    ];
   }
 
-  res.status(statusCode).json({
+  // 3. Final Standardized Response
+  return res.status(statusCode).json({
     success: false,
     message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : null,
+    errorSources,
+    // Only show stack trace in development mode for security
+    stack: process.env.NODE_ENV === 'development' ? err?.stack : null,
   });
 };
 
