@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import notFound from './middlewares/notFound.js';
 import router from './routes/index.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
+import { RateLimiter } from './middlewares/rateLimiter.js';
+
 
 const app: Application = express();
 
@@ -14,6 +16,8 @@ app.use(cookieParser());
 
 // Application Routes
 app.use('/api/v1', router);
+
+app.use(RateLimiter.globalLimiter);
 
 // This acts as the "Catch-all" for any URL that didn't match the routes above
 app.use(notFound);
