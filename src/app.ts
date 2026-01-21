@@ -8,11 +8,14 @@ import { RateLimiter } from './middlewares/rateLimiter.js';
 
 
 const app: Application = express();
-
 // Parsers
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
+
+app.get('/', (req, res) => {
+    res.send('Server is running with TypeScript NodeNext!');
+});
 
 // Application Routes
 app.use('/api/v1', router);
