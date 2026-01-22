@@ -4,7 +4,8 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ESNext"],
-    "types": ["node"],
+    "types": ["node","jest", "mocha"],
+    
     
     "rootDir": "./src",
     "outDir": "./dist",
