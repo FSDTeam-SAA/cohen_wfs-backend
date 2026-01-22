@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand"
+    "start": "node dist/server.js"
+
   },
   "dependencies": {
     "@types/express-rate-limit": "^5.1.3",
