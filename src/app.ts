@@ -1,3 +1,4 @@
+import { pinoHttp } from 'pino-http';
 import express, { Application } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -5,13 +6,30 @@ import notFound from './middlewares/notFound.js';
 import router from './routes/index.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
 import { RateLimiter } from './middlewares/rateLimiter.js';
+import logger from './utils/logger.js';
 
 
 const app: Application = express();
+
+
 // Parsers
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
+
+app.use(pinoHttp({
+    logger,
+    customLogLevel: (res, err) => {
+        if (err || (res.statusCode !== undefined && res.statusCode >= 400)) return 'error';
+        return 'info';
+    },
+    serializers: {
+        req: (req) => ({
+            method: req.method,
+            url: req.url,
+        }),
+    },
+}));
 
 app.get('/', (req, res) => {
     res.send('Server is running with TypeScript NodeNext!');

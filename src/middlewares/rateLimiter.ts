@@ -37,6 +37,17 @@ const contactLimiter = rateLimit({
     message: 'Too many contact enquiries from this IP, please try again after an hour',
 });
 
+const enquiryRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 3, // Limit each IP to 3 enquiries per hour
+  message: {
+    success: false,
+    message: "Too many enquiries from this IP. Please try again after an hour to prevent spam."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // Limit each IP to 100 requests per window
@@ -53,5 +64,6 @@ export const RateLimiter = {
     mailLimiter,
     otpLimiter,
     contactLimiter,
-    globalLimiter
+    globalLimiter,
+    enquiryRateLimiter
 };

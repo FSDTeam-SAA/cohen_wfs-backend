@@ -8,18 +8,21 @@ import { TUserRole } from '../modules/user/user.interface.js';
 
 const Auth = (...requiredRoles: TUserRole[]) => {
     return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const token = req.headers.authorization;
+        const authHeader = req.headers.authorization;
 
-        // 1. Check if token is sent
-        if (!token) {
-            throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!');
+        // 1. Check if token is sent and follows Bearer schema
+        // FIX: This solves your Postman "invalid token" error
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized! Please login.');
         }
 
+        const token = authHeader.split(' ')[1];
+
         // 2. Verify token
-        let decoded;
+        let decoded: JwtPayload;
         try {
             decoded = jwt.verify(
-                token,
+                token as string,
                 process.env.JWT_ACCESS_SECRET as string
             ) as JwtPayload;
         } catch (error) {
@@ -29,24 +32,43 @@ const Auth = (...requiredRoles: TUserRole[]) => {
         const { role, email, iat } = decoded;
 
         // 3. Check if user exists in DB
-        const user = await User.findOne({ email });
+        const user = await User.isUserExistsByEmail(email); // Using a static method is cleaner
 
         if (!user) {
-            throw new AppError(StatusCodes.NOT_FOUND, 'This user is not found!');
+            throw new AppError(StatusCodes.NOT_FOUND, 'The user belonging to this token no longer exists!');
         }
 
         // 4. Check if user is deleted
-        if (user.isDeleted) {
+        if (user?.isDeleted) {
             throw new AppError(StatusCodes.FORBIDDEN, 'This user is deleted!');
         }
 
-        // 5. Check role authorization
-        if (requiredRoles.length && !requiredRoles.includes(role)) {
-            throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized to access this route!');
+        // 5. Check if user is blocked
+        if (user && 'status' in user) {
+            if ((user as { status: string }).status === 'blocked') {
+                throw new AppError(StatusCodes.FORBIDDEN, 'This user is blocked!');
+            }
         }
 
-        // 6. Attach user to request object (Using your index.d.ts definition)
-        req.user = decoded as JwtPayload;
+        // 6. Security: Check if password was changed after the token was issued
+        // This ensures that if a password is reset, old tokens are instantly killed
+        if (
+            user.passwordChangedAt &&
+            User.isJWTIssuedBeforePasswordChanged(
+                user.passwordChangedAt,
+                iat as number
+            )
+        ) {
+            throw new AppError(StatusCodes.UNAUTHORIZED, 'Password recently changed! Please login again.');
+        }
+
+        // 7. Check role authorization
+        if (requiredRoles.length && !requiredRoles.includes(role)) {
+            throw new AppError(StatusCodes.FORBIDDEN, 'You do not have permission to access this route!');
+        }
+
+        // 8. Attach user to request object
+        req.user = decoded;
         next();
     });
 };

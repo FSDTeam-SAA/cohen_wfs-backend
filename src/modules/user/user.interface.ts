@@ -15,9 +15,12 @@ export interface TUser {
     // Simple OTP system
     otp?: string | null;
     otpExpires?: Date | null;
+    status: string;
     passwordChangedAt?: Date;
 }
 
 export interface UserModel extends Model<TUser> {
+    isJWTIssuedBeforePasswordChanged(passwordChangedAt: Date, arg1: number): unknown;
     isUserExistsByEmail(email: string): Promise<HydratedDocument<TUser> | null>;
+    isPasswordMatched(plainTextPassword: string, hashedPassword: string): Promise<boolean>;
 }

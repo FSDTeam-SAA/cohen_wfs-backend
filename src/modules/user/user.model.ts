@@ -16,6 +16,11 @@ const userSchema = new Schema<TUser, UserModel>(
         },
         isVerified: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false },
+        status: {
+            type: String,
+            enum: ['in-progress', 'blocked'],
+            default: 'in-progress',
+        },
         passwordChangedAt: { type: Date },
         otp: { type: String, default: null, select: false },
         otpExpires: { type: Date, default: null, select: false },
@@ -38,8 +43,24 @@ userSchema.pre('save', async function () {
     // No next() needed here!
 });
 
+
 userSchema.statics.isUserExistsByEmail = async function (email: string) {
     return await this.findOne({ email }).select('+password +otp +otpExpires');
+};
+
+userSchema.statics.isPasswordMatched = async function (
+  plainTextPassword,
+  hashedPassword
+) {
+  return await bcrypt.compare(plainTextPassword, hashedPassword);
+};
+
+userSchema.statics.isJWTIssuedBeforePasswordChanged = function (
+    passwordChangedTimestamp: Date,
+    jwtIssuedTimestamp: number
+) {
+    const passwordChangedTime = new Date(passwordChangedTimestamp).getTime() / 1000;
+    return passwordChangedTime > jwtIssuedTimestamp;
 };
 
 export const User = model<TUser, UserModel>('User', userSchema);

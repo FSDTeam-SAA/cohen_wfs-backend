@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import AppError from '../errors/AppError.js';
 import { handleZodError } from '../errors/handleZodError.js';
+import logger from '../utils/logger.js';
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // 1. Set Default Values
@@ -45,6 +46,13 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
       },
     ];
   }
+
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
 
   // 3. Final Standardized Response
   return res.status(statusCode).json({

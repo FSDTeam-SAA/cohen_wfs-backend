@@ -20,6 +20,7 @@ export default {
         emailAddress: process.env.EMAIL_ADDRESS,
         emailPass: process.env.EMAIL_PASSWORD,
         adminEmail: process.env.ADMIN_EMAIL,
+        adminEmailAddress: process.env.ADMIN_EMAIL,
     },
     reset: {
         reset_password_token_secret: process.env.RESET_PASSWORD_TOKEN_SECRET,

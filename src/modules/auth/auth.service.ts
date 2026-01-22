@@ -147,56 +147,65 @@ const forgotPassword = async (email: string) => {
 
 // STEP 2: Verify OTP
 const verifyOTP = async (email: string, otp: string) => {
-  const user = await User.isUserExistsByEmail(email);
-  if (!user) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
-
-  // Check against the unified 'otp' and 'otpExpires' fields
-  const isMatch = user.otp === otp;
-  const isExpired = user.otpExpires && new Date() > user.otpExpires;
-
-  if (!isMatch || isExpired) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or expired code!');
+  const user = await User.findOne({ email }).select('+otp +otpExpires');
+  
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   }
 
-  return null;
+  // 1. Check if OTP exists at all
+  if (!user.otp) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'No OTP requested for this account!');
+  }
+
+  // 2. Check for Match
+  if (user.otp !== otp) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid verification code!');
+  }
+
+  // 3. Check for Expiry
+  const currentTime = new Date();
+  if (user.otpExpires && currentTime > user.otpExpires) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'The code has expired. Please request a new one.');
+  }
+
+  // 4. Clear OTP after successful verification so it can't be reused
+  await User.findByIdAndUpdate(user._id, {
+    $unset: { otp: 1, otpExpires: 1 }
+  });
+
+  return { message: "OTP verified successfully" };
 };
 
 // STEP 3: Reset Password - Updates DB and clears OTP
 const resetPassword = async (payload: {
   email: string;
-  otp: string;
+  // No OTP here! We use the token from the header or a hidden field
   newPassword: string;
   confirmPassword: string;
 }) => {
-  const { email, otp, newPassword, confirmPassword } = payload;
+  const { email, newPassword, confirmPassword } = payload;
 
   if (newPassword !== confirmPassword) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Passwords do not match!');
   }
 
+  // We already verified the person via OTP in the previous step
   const user = await User.isUserExistsByEmail(email);
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
 
-  // Final security check of the OTP before updating password
-  const isMatch = user.otp === otp;
-  const isExpired = user.otpExpires && new Date() > user.otpExpires;
-
-  if (!isMatch || isExpired) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or expired code!');
+  // Check if password is same as old
+  const isSamePassword = await User.isPasswordMatched(newPassword, user.password as string);
+  if (isSamePassword) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'New password cannot be the same as old!');
   }
 
-  // Update the password - The pre-save hook in your model will hash this automatically
   user.password = newPassword;
-
-  // Clear the OTP fields so they cannot be reused
-  user.otp = null;
-  user.otpExpires = null;
-
+  user.passwordChangedAt = new Date();
   await user.save();
 
-  return null;
+  return { message: "Password reset successful" };
 };
-
 
 
 
