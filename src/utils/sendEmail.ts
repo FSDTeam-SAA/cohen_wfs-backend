@@ -7,7 +7,7 @@ interface SendEmailParams {
     html: string;
 }
 
-const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
+const sendEmail = async (email: string, p0: string, p1: string, { to, subject, html }: SendEmailParams) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail', // Use 'service' instead of host/port
         auth: {

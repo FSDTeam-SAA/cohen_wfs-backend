@@ -32,6 +32,12 @@ const verifyOtpValidationSchema = z.object({
   }),
 });
 
+const resendOTPValidationSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+  }),
+})
+
 const resetPasswordValidationSchema = z.object({
   body: z.object({
     accessToken: z.string().nonempty({ message: "Access token is required" }),
@@ -47,5 +53,6 @@ export const AuthValidation = {
     refreshTokenValidationSchema,
     forgotPasswordValidationSchema,
     verifyOtpValidationSchema,
-    resetPasswordValidationSchema
+    resetPasswordValidationSchema,
+    resendOTPValidationSchema
 };

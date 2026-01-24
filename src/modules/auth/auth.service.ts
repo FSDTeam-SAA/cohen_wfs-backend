@@ -6,8 +6,8 @@ import { TLoginUser, TResetPassword } from './auth.interface.js';
 import config from '../../config/index.js';
 import { createToken } from './auth.utils.js'; // Import the utility
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { emailTemplates } from '../../utils/emailTemplates.js';
 import sendEmail from '../../utils/sendEmail.js';
+import { emailTemplates } from '../../utils/emailTemplates.js';
 
 
 // declare const jwt: typeof import('jsonwebtoken');
@@ -183,6 +183,33 @@ const verifyOTP = async (email: string, otp: string) => {
   return { message: "OTP verified successfully", accessToken };
 };
 
+const resendOTP = async (email: string) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  // 1. Generate new OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+  // 2. Update DB
+  await User.findByIdAndUpdate(user._id, {
+    otp,
+    otpExpires,
+  });
+
+  // 3. Send Email
+  await sendEmail(
+  user.email,
+  'Your New Verification Code',
+  `Your new OTP is: ${otp}`,
+  { to: user.email, subject: 'Your New Verification Code', html: `Your new OTP is: ${otp}` }
+);
+
+  return { message: 'A new OTP has been sent to your email.' };
+};
+
 
 
 // STEP 3: Reset Password - Updates DB and clears OTP
@@ -227,6 +254,7 @@ export const AuthService = {
   refreshToken,
   forgotPassword,
   verifyOTP,
-  resetPasswordFromDB
+  resetPasswordFromDB,
+  resendOTP
 };
 
