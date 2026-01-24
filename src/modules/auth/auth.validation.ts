@@ -34,9 +34,9 @@ const verifyOtpValidationSchema = z.object({
 
 const resetPasswordValidationSchema = z.object({
   body: z.object({
-    email: z.string().email(),
-    otp: z.string().length(6),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    accessToken: z.string().nonempty({ message: "Access token is required" }),
+    newPassword: z.string().nonempty({ message: "New password is required" }).min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().nonempty({ message: "Confirm password is required" }),
   }),
 });
 

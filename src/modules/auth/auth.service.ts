@@ -148,7 +148,7 @@ const forgotPassword = async (email: string) => {
 // STEP 2: Verify OTP
 const verifyOTP = async (email: string, otp: string) => {
   const user = await User.findOne({ email }).select('+otp +otpExpires');
-  
+
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
   }
@@ -174,27 +174,40 @@ const verifyOTP = async (email: string, otp: string) => {
     $unset: { otp: 1, otpExpires: 1 }
   });
 
-  return { message: "OTP verified successfully" };
+  const accessToken = createToken(
+    { email: user.email, role: user.role },
+    config.JWT_SECRET as string,
+    config.JWT_EXPIRES_IN as string
+  );
+
+  return { message: "OTP verified successfully", accessToken };
 };
 
+
+
 // STEP 3: Reset Password - Updates DB and clears OTP
-const resetPassword = async (payload: {
-  email: string;
-  // No OTP here! We use the token from the header or a hidden field
-  newPassword: string;
-  confirmPassword: string;
-}) => {
-  const { email, newPassword, confirmPassword } = payload;
+const resetPasswordFromDB = async (accessToken: string, payload: { newPassword: string; confirmPassword: string }) => {
+  const { newPassword, confirmPassword } = payload;
 
   if (newPassword !== confirmPassword) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Passwords do not match!');
   }
 
-  // We already verified the person via OTP in the previous step
-  const user = await User.isUserExistsByEmail(email);
+  // 1. Decrypt the token to see who this belongs to
+  let decoded;
+  try {
+    decoded = jwt.verify(accessToken, config.JWT_SECRET as string) as any;
+  } catch (err) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired session. Please verify OTP again.');
+  }
+
+  // 2. The IDENTITY is extracted from the token (Secure)
+  const email = decoded.email;
+
+  const user = await User.findOne({ email }).select('+password');
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
 
-  // Check if password is same as old
+  // 3. Prevent setting same password
   const isSamePassword = await User.isPasswordMatched(newPassword, user.password as string);
   if (isSamePassword) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'New password cannot be the same as old!');
@@ -214,6 +227,6 @@ export const AuthService = {
   refreshToken,
   forgotPassword,
   verifyOTP,
-  resetPassword
+  resetPasswordFromDB
 };
 
