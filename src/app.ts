@@ -7,15 +7,19 @@ import router from './routes/index.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
 import { RateLimiter } from './middlewares/rateLimiter.js';
 import logger from './utils/logger.js';
-
+import config from './config/index.js';
 
 const app: Application = express();
 
 
 // Parsers
 app.use(express.json());
-app.use(cors());
+app.use(cors(
+    { origin: config.frontend_url, credentials: true }
+));
 app.use(cookieParser());
+
+
 
 app.use(pinoHttp({
     logger,

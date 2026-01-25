@@ -38,7 +38,7 @@ export default {
         AES_IV: process.env.AES_IV,
     },
     frontend_reset_password_url: process.env.RESET_PASSWORD_URL,
-    frontend_url: process.env.FRONT_END_URL,
+    frontend_url: process.env.FRONTEND_URL,
 
     stripe: {
         stripeSecretKey: process.env.STRIPE_SECRET_KEY,
