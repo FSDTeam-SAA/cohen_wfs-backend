@@ -1,17 +1,15 @@
-import { StatusCodes } from 'http-status-codes';
-import AppError from '../../errors/AppError.js';
-import { emailTemplates } from '../../utils/emailTemplates.js';
-import sendEmail from '../../utils/sendEmail.js';
-import { TContact } from './contact.interface.js';
-import { Contact } from './contact.model.js';
-
+import { StatusCodes } from "http-status-codes";
+import AppError from "../../errors/AppError.js";
+import { emailTemplates } from "../../utils/emailTemplates.js";
+import sendEmail from "../../utils/sendEmail.js";
+import { TContact } from "./contact.interface.js";
+import { Contact } from "./contact.model.js";
 
 const createContact = async (payload: TContact) => {
-
   const existingContact = await Contact.findOne({ email: payload.email });
 
-  if(existingContact){
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Contact already exists');
+  if (existingContact) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Contact already exists");
   }
   // 1. Save to Database
   const result = await Contact.create(payload);
@@ -19,7 +17,7 @@ const createContact = async (payload: TContact) => {
   // 2. Send Admin Notification (Internal)
   const adminHtml = emailTemplates.enquiryNotification(result);
   await sendEmail({
-    to: 'sarkarnayem955@gmail.com', // Your Admin Email
+    to: "sarkarnayem955@gmail.com", // Your Admin Email
     subject: `New ${payload.category} from ${payload.fullName}`,
     html: adminHtml,
   });
