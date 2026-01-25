@@ -184,28 +184,28 @@ const verifyOTP = async (email: string, otp: string) => {
 };
 
 const resendOTP = async (email: string) => {
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
-  }
+  const user = await User.isUserExistsByEmail(email);
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
 
-  // 1. Generate new OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-  // 2. Update DB
-  await User.findByIdAndUpdate(user._id, {
-    otp,
-    otpExpires,
-  });
+  await User.findByIdAndUpdate(user._id, { otp, otpExpires });
 
-  // 3. Send Email
+  // Generate the HTML using the new template
+  const html = emailTemplates.resendOtp(otp);
+
+  // Use the 4-argument signature to stay safe
   await sendEmail(
-  user.email,
-  'Your New Verification Code',
-  `Your new OTP is: ${otp}`,
-  { to: user.email, subject: 'Your New Verification Code', html: `Your new OTP is: ${otp}` }
-);
+    user.email, // arg 1
+    '',         // arg 2
+    '',         // arg 3
+    {           // arg 4 (params object)
+      to: user.email,
+      subject: 'Your New Witklip Verification Code',
+      html: html,
+    }
+  );
 
   return { message: 'A new OTP has been sent to your email.' };
 };

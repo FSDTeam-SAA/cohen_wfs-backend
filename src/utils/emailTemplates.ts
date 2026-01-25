@@ -169,7 +169,28 @@ enquiryNotification: (enquiry: any) => `
         <p style="color: #aaa; font-size: 12px; text-align: center;">This is an automated response. Please do not reply to this email.</p>
         <p style="color: #aaa; font-size: 12px; text-align: center;">&copy; 2026 Witklip Agriculture. All rights reserved.</p>
     </div>
-    `
+    `,
+
+    // Template for Resending OTP
+resendOtp: (otp: string) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #4CAF50;">Witklip</h1>
+        </div>
+        <h2 style="color: #333;">New Verification Code</h2>
+        <p style="color: #555; font-size: 16px;">Hello,</p>
+        <p style="color: #555; font-size: 16px;">We received a request for a new verification code. Please use the 6-digit code below to continue. <b>This code replaces any previous codes sent to you.</b></p>
+        <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #4CAF50; border: 2px dashed #4CAF50; padding: 10px 20px; border-radius: 4px;">
+                ${otp}
+            </span>
+        </div>
+        <p style="color: #555; font-size: 14px;">This code is valid for 10 minutes.</p>
+        <p style="color: #999; font-size: 12px;">If you did not request a new code, please ensure your account is secure.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #aaa; font-size: 12px; text-align: center;">&copy; 2026 Witklip. All rights reserved.</p>
+    </div>
+`,
 
 
 
