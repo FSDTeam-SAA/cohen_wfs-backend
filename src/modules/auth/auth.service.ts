@@ -126,7 +126,7 @@ const forgotPassword = async (email: string) => {
   const html = emailTemplates.otpEmail(generatedOtp);
 
   try {
-    const emailResult = await sendEmail({
+    const emailResult = await sendEmail(email, '', '', {
       to: user.email,
       subject: 'Verify your Witklip account',
       html: html,
