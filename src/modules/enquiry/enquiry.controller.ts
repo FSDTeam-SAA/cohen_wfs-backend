@@ -24,7 +24,7 @@ const getAllEnquiries = catchAsync(async (req: Request, res: Response) => {
         success: true,
         message: 'Enquiries retrieved successfully',
         meta: result.meta,
-        data: result,
+        data: result.data,
     });
 });
 

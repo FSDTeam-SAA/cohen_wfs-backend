@@ -6,12 +6,12 @@ const createEnquiryZodSchema = z.object({
         email: z.string().email(),
         phoneNumber: z.string(),
         companyName: z.string(),
-        enquiryType: z.enum(['Purchase', 'Partnership', 'Information', 'Distribution']),
+        enquiryType: z.enum(['Purchase', 'Buyer Enquiry', 'Supplier Enquiry']),
         productInterest: z.enum(['Potatoes', 'Carrots', 'Livestock']),
         location: z.string(),
         message: z.string(),
         volumeRequired: z.string().optional(),
-        
+
     })
 });
 

@@ -5,6 +5,9 @@ import { emailTemplates } from '../../utils/emailTemplates.js';
 import sendEmail from '../../utils/sendEmail.js';
 import { Enquiry } from './enquiry.model.js';
 import { Parser } from 'json2csv';
+import EnquiryQueryBuilder from './EnquiryQueryBuilder.js';
+
+
 
 const createEnquiryIntoDb = async (payload: any) => {
 
@@ -51,51 +54,85 @@ const getDashboardStatsFromDb = async () => {
 };
 
 // Feeds the "Recent Enquiries" table
-const getAllEnquiriesFromDb = async (query: Record<string, unknown>) => {
-    // 1. SEARCH LOGIC (Matches the search bar in your UI)
-    let searchTerm = '';
-    if (query?.searchTerm) {
-        searchTerm = query.searchTerm as string;
-    }
+// const getAllEnquiriesFromDb = async (query: Record<string, unknown>) => {
+//     // 1. SEARCH LOGIC (Matches the search bar in your UI)
+//     let searchTerm = '';
+//     if (query?.searchTerm) {
+//         searchTerm = query.searchTerm as string;
+//     }
 
-    // Fields visible in your table that should be searchable
-    const searchableFields = ['enquiryId', 'companyName', 'fullName', 'email', 'contactNumber'];
+//     // Fields visible in your table that should be searchable
+//     const searchableFields = ['enquiryId', 'companyName', 'fullName', 'email', 'contactNumber'];
 
-    const searchQuery = Enquiry.find({
-        $or: searchableFields.map((field) => ({
-            [field]: { $regex: searchTerm, $options: 'i' },
-        })),
-    });
+//     const searchQuery = Enquiry.find({
+//         $or: searchableFields.map((field) => ({
+//             [field]: { $regex: searchTerm, $options: 'i' },
+//         })),
+//     });
 
-    // 2. FILTER LOGIC (Matches the dropdowns: Status, Product, Priority)
-    const queryObj = { ...query };
-    const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
-    excludeFields.forEach((el) => delete queryObj[el]);
+//     // 2. FILTER LOGIC (Matches the dropdowns: Status, Product, Priority)
+//     const queryObj = { ...query };
+//     const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
+//     excludeFields.forEach((el) => delete queryObj[el]);
 
-    const filterQuery = searchQuery.find(queryObj);
+//     const filterQuery = searchQuery.find(queryObj);
 
-    // 3. PAGINATION & SORTING
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
-    const skip = (page - 1) * limit;
+//     // 3. PAGINATION & SORTING
+//     const page = Number(query.page) || 1;
+//     const limit = Number(query.limit) || 10;
+//     const skip = (page - 1) * limit;
 
-    const result = await filterQuery
-        .sort('-createdAt')
-        .skip(skip)
-        .limit(limit);
+//     const result = await filterQuery
+//         .sort('-createdAt')
+//         .skip(skip)
+//         .limit(limit);
 
-    const total = await Enquiry.countDocuments(queryObj);
+//     const total = await Enquiry.countDocuments(queryObj);
+
+//     return {
+//         meta: {
+//             page,
+//             limit,
+//             total,
+//             totalPage: Math.ceil(total / limit),
+//         },
+//         data: result,
+//     };
+// };
+
+
+export const getAllEnquiriesFromDb = async (query: Record<string, unknown>) => {
+    const searchableFields = [
+        'enquiryId',
+        'companyName',
+        'fullName',
+        'email',
+        'phoneNumber'
+    ];
+
+    const builder = new EnquiryQueryBuilder(Enquiry.find(), query)
+        .search(searchableFields)
+        .filter()
+        .sort()
+        .fields();
+
+    // Get count from the filtered state before pagination
+    const total = await Enquiry.countDocuments(builder.modelQuery.getFilter());
+    // Add this right before "const total = ..."
+console.log("DEBUG: Final Mongo Filter:", JSON.stringify(builder.modelQuery.getFilter(), null, 2));
+    const result = await builder.paginate().modelQuery;
 
     return {
         meta: {
-            page,
-            limit,
+            page: Number(query.page) || 1,
+            limit: Number(query.limit) || 10,
             total,
-            totalPage: Math.ceil(total / limit),
+            totalPage: Math.ceil(total / (Number(query.limit) || 10)),
         },
         data: result,
     };
 };
+
 
 const getEnquiryStatsFromDb = async () => {
     const stats = await Enquiry.aggregate([

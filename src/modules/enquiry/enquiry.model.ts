@@ -8,7 +8,7 @@ const enquirySchema = new Schema({
     companyName: { type: String },
     enquiryType: {
         type: String,
-        enum: ['Purchase', 'Partnership', 'Information', 'Distribution'],
+        enum: ['Purchase', 'Buyer Enquiry', 'Supplier Enquiry'],
         required: true
     },
     productInterest: {

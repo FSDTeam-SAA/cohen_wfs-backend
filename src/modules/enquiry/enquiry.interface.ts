@@ -1,6 +1,6 @@
 export type TEnquiryType = 'Purchase' | 'Buyer Enquiry' | 'Supplier Enquiry';
 export type TProductInterest = 'Potatoes' | 'Carrots' | 'Livestock' | 'Multiple Product';
-export type TEnquiryStatus = 'New' | 'In Progress' | 'Follow-up Required' | 'Completed';
+export type TEnquiryStatus = 'New' | 'In-Progress' | 'Follow-up Required' | 'Completed';
 export type TPriority = 'High' | 'Medium' | 'Low';
 
 export interface TEnquiry {
