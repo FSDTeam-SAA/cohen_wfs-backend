@@ -120,12 +120,14 @@ const getEnquiryStatsFromDb = async () => {
     const totalEnquiries = await Enquiry.countDocuments();
     const highPriorityCount = await Enquiry.countDocuments({ priority: 'High' });
     const newEnquiriesCount = await Enquiry.countDocuments({ status: 'New' });
+    const inProgressCount = await Enquiry.countDocuments({ status: 'In-Progress' });
 
     return {
         productStats: stats, // Array of { product: "Potatoes", count: 4 }
         totalEnquiries,
         highPriorityCount,
         newEnquiriesCount,
+        inProgressCount
     };
 };
 

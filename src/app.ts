@@ -1,7 +1,9 @@
 import { pinoHttp } from 'pino-http';
+import cookieParser  from 'cookie-parser';
+
 import express, { Application } from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
+
 import notFound from './middlewares/notFound.js';
 import router from './routes/index.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
@@ -23,12 +25,12 @@ app.use(cookieParser());
 
 app.use(pinoHttp({
     logger,
-    customLogLevel: (res, err) => {
+    customLogLevel: (res: any, err: any) => {
         if (err || (res.statusCode !== undefined && res.statusCode >= 400)) return 'error';
         return 'info';
     },
     serializers: {
-        req: (req) => ({
+        req: (req:any) => ({
             method: req.method,
             url: req.url,
         }),
