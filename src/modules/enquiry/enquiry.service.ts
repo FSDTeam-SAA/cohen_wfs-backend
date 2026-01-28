@@ -119,7 +119,7 @@ export const getAllEnquiriesFromDb = async (query: Record<string, unknown>) => {
     // Get count from the filtered state before pagination
     const total = await Enquiry.countDocuments(builder.modelQuery.getFilter());
     // Add this right before "const total = ..."
-console.log("DEBUG: Final Mongo Filter:", JSON.stringify(builder.modelQuery.getFilter(), null, 2));
+    console.log("DEBUG: Final Mongo Filter:", JSON.stringify(builder.modelQuery.getFilter(), null, 2));
     const result = await builder.paginate().modelQuery;
 
     return {
